@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>XTREAM PRO</title>
+    
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-main: #050508;
+            --bg-card: #121217;
+            --accent: #00ff7f;
+            --text: #ffffff;
+            --text-dim: #8e8e93;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { 
+            background: var(--bg-main); 
+            color: var(--text); 
+            font-family: 'Segoe UI', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- NAVIGATION --- */
+        nav { 
+            position: fixed; bottom: 0; left: 0; right: 0; height: 70px; 
+            background: rgba(13, 13, 18, 0.95); backdrop-filter: blur(10px);
+            display: flex; justify-content: space-around; align-items: center;
+            border-top: 1px solid rgba(255,255,255,0.05); z-index: 1000;
+        }
+        .nav-btn { display: flex; flex-direction: column; align-items: center; color: var(--text-dim); font-size: 10px; cursor: pointer; transition: 0.2s; font-weight: 800; }
+        .nav-btn i { font-size: 20px; margin-bottom: 5px; }
+        .nav-btn.active { color: var(--accent); }
+
+        /* --- CONTENT AREA --- */
+       main { 
+    flex: 1; 
+    overflow-y: auto; 
+    padding: 15px 15px 90px; 
+    position: relative; /* Context for sticky positioning */
+}
+        
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 20px; }
+        .brand { font-weight: 900; color: var(--accent); font-size: 22px; }
+        
+        .search-bar { width: 100%; margin-bottom: 20px; position: relative; }
+        .search-bar input { width: 100%; padding: 14px 45px; background: var(--bg-card); border: 1px solid #222; border-radius: 12px; color: white; font-size: 14px; }
+        .search-bar i { position: absolute; left: 15px; top: 16px; color: var(--text-dim); }
+
+        /* --- CATEGORIES --- */
+/* --- CATEGORY DROPDOWN --- */
+.category-dropdown {
+    position: sticky; /* Keeps it at the top of the scroll container */
+    top: 0;           /* Sticks to the very top */
+    margin-bottom: 20px;
+    width: 100%;
+    z-index: 2000;    /* Ensures it stays above the grid cards */
+    background: var(--bg-main); /* Matches background to prevent grid bleed-through */
+    padding-top: 5px;  /* Small gap from the search bar */
+    padding-bottom: 10px;
+}
+
+.dropbtn {
+    width: 100%;
+    background: var(--bg-card);
+    color: var(--text);
+    padding: 14px 20px;
+    font-size: 14px;
+    border: 1px solid #222;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: var(--bg-card);
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
+    z-index: 2001;
+    border: 1px solid #333;
+    border-radius: 12px;
+    margin-top: 5px;
+}
+
+.dropdown-content div {
+    color: var(--text-dim);
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    border-bottom: 1px solid #1c1c24;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.dropdown-content div:last-child { border-bottom: none; }
+
+.dropdown-content div:active, .dropdown-content div.active {
+    background-color: #1c1c24;
+    color: var(--accent);
+}
+
+.show { display: block; }
+        /* --- GRID --- */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+        .card { background: var(--bg-card); border-radius: 12px; overflow: hidden; border: 1px solid #222; cursor: pointer; transition: 0.2s; }
+        .card:active { transform: scale(0.96); }
+        .card-img { width: 100%; aspect-ratio: 2/3; position: relative; background: #000; }
+        .card-img img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Live TV Icons (White Box) */
+        .mode-live .card-img { aspect-ratio: 16/10; background: #fff; padding: 10px; }
+        .mode-live .card-img img { object-fit: contain; }
+        
+        .card-title { padding: 8px; font-size: 11px; font-weight: 700; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* --- PLAYER --- */
+        #playerOverlay { position: fixed; inset: 0; background: #000; z-index: 5000; display: none; flex-direction: column; }
+        .player-head { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: #000; }
+        .video-js { width: 100% !important; height: auto !important; aspect-ratio: 16/9; }
+
+        /* --- SETTINGS --- */
+        #settingsMenu { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 6000; display: none; padding: 25px; overflow-y: auto; }
+        .settings-container { max-width: 450px; margin: 0 auto; }
+        input, select { width: 100%; padding: 14px; background: #16161f; border: 1px solid #222; color: #fff; border-radius: 10px; margin-bottom: 12px; }
+        .profile-item { background: #16161f; padding: 15px; border-radius: 12px; border: 1px solid #222; margin-bottom: 10px; cursor: pointer; }
+        .profile-item.active { border-color: var(--accent); }
+        .stat-badge { color: var(--accent); font-size: 10px; font-weight: 800; display: block; margin-top: 5px; }
+
+        #loader { position: fixed; inset: 0; background: var(--bg-main); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .progress-box { width: 60%; height: 4px; background: #222; border-radius: 10px; margin-top: 20px; overflow: hidden; }
+        #progressBar { height: 100%; width: 0%; background: var(--accent); transition: 0.3s; }
+
+        @media (min-width: 768px) {
+            .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+        }
+    </style>
+</head>
+<body class="mode-live">
+
+<div id="loader">
+    <div class="brand">XTREAM<span style="color:#fff">PRO</span></div>
+    <div id="loadText" style="margin-top:10px; font-size:12px; font-weight:bold; color:var(--text-dim)">INITIALIZING...</div>
+    <div class="progress-box"><div id="progressBar"></div></div>
+</div>
+
+<nav>
+    <div class="nav-btn active" id="nav-live" onclick="switchMode('live')"><i class="fas fa-tv"></i>LIVE</div>
+    <div class="nav-btn" id="nav-movies" onclick="switchMode('movies')"><i class="fas fa-film"></i>VOD</div>
+    <div class="nav-btn" id="nav-series" onclick="switchMode('series')"><i class="fas fa-layer-group"></i>SERIES</div>
+    <div class="nav-btn" onclick="toggleSettings()"><i class="fas fa-cog"></i>SETUP</div>
+</nav>
+
+<main>
+    <div class="header">
+        <div class="brand">XTREAM<span style="color:#fff">PRO</span></div>
+        <i class="fas fa-sync-alt" onclick="fullSync()" style="cursor:pointer"></i>
+    </div>
+
+    <div style="position: sticky; top: 0; background: var(--bg-main); z-index: 2000; padding-bottom: 10px;">
+    <div class="search-bar">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search..." oninput="runSearch(this.value)">
+    </div>
+
+    <div class="category-dropdown">
+        <button class="dropbtn" id="activeCatDisplay" onclick="toggleDrop()">
+            <span>All Categories</span>
+            <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="dropdown-content" id="catList"></div>
+    </div>
+</div>
+
+
+    <div class="grid" id="contentGrid"></div>
+</main>
+
+<div id="playerOverlay">
+    <div class="player-head">
+        <span id="playingTitle" style="font-weight:900; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; margin-right:15px;">---</span>
+        <i class="fas fa-times" onclick="closePlayer()" style="font-size:24px; cursor:pointer"></i>
+    </div>
+    <div style="flex:1; display:flex; align-items:center; background:#000;">
+        <video id="videoPlayer" class="video-js vjs-default-skin vjs-big-play-centered" controls autoplay playsinline></video>
+    </div>
+    <div id="epList" style="padding:15px; background:#0d0d12; display:none;"></div>
+</div>
+
+<div id="settingsMenu">
+    <div class="settings-container">
+        <h2 style="color:var(--accent); margin-bottom:20px;">Connection Setup</h2>
+        <input type="text" id="accName" placeholder="Profile Name">
+        <input type="text" id="hostInp" placeholder="Portal URL (http://domain.com:8080)">
+        <input type="text" id="userInp" placeholder="Username">
+        <input type="text" id="passInp" placeholder="Password">
+        
+       
+ <div id="playerSettingsWrapper">
+    <label style="font-size:10px; color:var(--text-dim); font-weight:800;">PLAYER ENGINE</label>
+    <select id="playerPref">
+        <option value="internal">Internal (In-App)</option>
+        <option value="vlc">VLC Player</option>
+        <option value="mx">MX Player</option>
+        <option value="mpv">MPV Player</option>
+    </select>
+</div>
+
+        <button onclick="saveNewAccount()" style="width:100%; padding:15px; background:var(--accent); border:none; border-radius:12px; color:#000; font-weight:bold; font-size:14px; cursor:pointer; margin-bottom:30px;">SAVE & CONNECT</button>
+        
+        <div class="brand" style="font-size:14px; margin-bottom:10px;">MY PROFILES</div>
+        <div id="profileBox"></div>
+        <p onclick="toggleSettings()" style="text-align:center; margin-top:25px; color:var(--text-dim); cursor:pointer; font-weight:bold;">CLOSE SETTINGS</p>
+    </div>
+</div>
+
+<script>
+// --- LOGIC RESTORATION ---
+const hardcoded = [
+    { name: "Official Server 1", type: "xtream", host: "http://realsport.scalecdn.co:8080", user: "Z3nXfkOnf0", pass: "Madt8rUvmN", isHardcoded: true },
+    { name: "Official Server 2", type: "xtream", host: "http://realsport.scalecdn.co:8080", user: "protonimumtv", pass: "DAK0191hDGH138das", isHardcoded: true },
+    { name: "Official Server 3", type: "xtream", host: "http://realsport.scalecdn.co:8080", user: "supersonicstreams", pass: "cUewZolveU8Jh18jk34BDJ", isHardcoded: true }
+];
+
+let saved = JSON.parse(localStorage.getItem('xt_accounts')) || [];
+let accounts = [...hardcoded, ...saved];
+let activeIdx = parseInt(localStorage.getItem('xt_active_idx')) || 0;
+let playerPref = localStorage.getItem('xt_player_pref') || 'internal';
+let currentMode = 'live';
+let db = { live: {c:[], s:[]}, movies: {c:[], s:[]}, series: {c:[], s:[]} };
+let player = videojs('videoPlayer');
+
+window.onload = () => {
+    // Detect if the device is Android
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const playerWrapper = document.getElementById('playerSettingsWrapper');
+    const playerDropdown = document.getElementById('playerPref');
+
+    if (!isAndroid) {
+        // If on PC, hide the settings option and force internal player
+        if (playerWrapper) playerWrapper.style.display = 'none';
+        playerPref = 'internal';
+        localStorage.setItem('xt_player_pref', 'internal');
+    } else {
+        // On Android, initialize the dropdown normally
+        playerDropdown.value = playerPref;
+        playerDropdown.onchange = (e) => {
+            playerPref = e.target.value;
+            localStorage.setItem('xt_player_pref', playerPref);
+        };
+    }
+
+    if (accounts.length === 0) toggleSettings(); else fullSync();
+};
+
+async function fullSync() {
+    const loader = document.getElementById('loader'), 
+          bar = document.getElementById('progressBar'), 
+          txt = document.getElementById('loadText');
+    
+    loader.style.display = 'flex';
+    
+    try {
+        // Sync Live
+        txt.innerText = "SYNCING LIVE..."; 
+        await fetchModeData('live'); 
+        bar.style.width = '33%';
+
+        // Sync VOD (Movies)
+        txt.innerText = "SYNCING VOD..."; 
+        await fetchModeData('movies'); 
+        bar.style.width = '66%';
+        // Hide VOD button if no movies found
+        document.getElementById('nav-movies').style.display = db.movies.s.length === 0 ? 'none' : 'flex';
+
+        // Sync Series
+        txt.innerText = "SYNCING SERIES..."; 
+        await fetchModeData('series'); 
+        bar.style.width = '100%';
+        // Hide Series button if no series found
+        document.getElementById('nav-series').style.display = db.series.s.length === 0 ? 'none' : 'flex';
+
+        renderCategories();
+        renderGrid();
+    } catch (e) { 
+        console.error(e);
+        alert("Server Connection Failed"); 
+    }
+    setTimeout(() => loader.style.display = 'none', 800);
+}
+async function fetchModeData(mode) {
+    const acc = accounts[activeIdx];
+    const auth = `&username=${acc.user}&password=${acc.pass}`;
+    const actC = mode==='live'?'get_live_categories':mode==='movies'?'get_vod_categories':'get_series_categories';
+    const actS = mode==='live'?'get_live_streams':mode==='movies'?'get_vod_streams':'get_series';
+    
+    const [c, s] = await Promise.all([
+        fetch(`${acc.host}/player_api.php?action=${actC}${auth}`).then(r => r.json()),
+        fetch(`${acc.host}/player_api.php?action=${actS}${auth}`).then(r => r.json())
+    ]);
+    db[mode].c = Array.isArray(c) ? c : [];
+    db[mode].s = Array.isArray(s) ? s : [];
+}
+
+function toggleDrop() {
+    document.getElementById("catList").classList.toggle("show");
+}
+
+// Close the dropdown if the user clicks outside of it
+window.onclick = function(event) {
+    if (!event.target.closest('.category-dropdown')) {
+        var dropdowns = document.getElementsByClassName("dropdown-content");
+        for (var i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+            if (openDropdown.classList.contains('show')) {
+                openDropdown.classList.remove('show');
+            }
+        }
+    }
+}
+
+function renderCategories() {
+    const box = document.getElementById('catList');
+    const display = document.getElementById('activeCatDisplay');
+    
+    // Reset display text when switching modes (Live/VOD/Series)
+    display.querySelector('span').innerText = "Select Category";
+    
+    let html = `<div class="active" onclick="filterByCat('all', 'All Categories')">All Categories</div>`;
+    db[currentMode].c.forEach(cat => {
+        html += `<div onclick="filterByCat('${cat.category_id}', '${cat.category_name}')">${cat.category_name}</div>`;
+    });
+    box.innerHTML = html;
+}
+
+function filterByCat(id, name) {
+    // Update the button text to show what is selected
+    document.getElementById('activeCatDisplay').querySelector('span').innerText = name;
+    
+    // Hide the dropdown
+    document.getElementById("catList").classList.remove("show");
+    
+    // Load the grid
+    renderGrid(id);
+}
+function renderGrid(catId = 'all') {
+    const grid = document.getElementById('contentGrid');
+    document.body.className = `mode-${currentMode}`;
+    
+    let items = db[currentMode].s;
+    if (catId !== 'all') items = items.filter(i => String(i.category_id) === String(catId));
+    
+    grid.innerHTML = items.slice(0, 120).map(i => {
+        const name = (i.name || i.title || "Unknown").replace(/'/g, "");
+        const thumb = i.stream_icon || i.cover || 'https://via.placeholder.com/150x220?text=NO+LOGO';
+        const id = i.stream_id || i.series_id;
+        const action = currentMode === 'series' ? `fetchSeriesDetails('${id}', '${name}')` : `playStream('${id}', '${name}')`;
+        
+        return `
+            <div class="card" onclick="${action}">
+                <div class="card-img"><img src="${thumb}" loading="lazy"></div>
+                <div class="card-title">${name}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function fetchSeriesDetails(id, name) {
+    document.getElementById('playerOverlay').style.display = 'flex';
+    document.getElementById('playingTitle').innerText = name;
+    const epBox = document.getElementById('epList');
+    epBox.style.display = 'block'; epBox.innerHTML = '<span style="color:var(--accent)">Loading episodes...</span>';
+    
+    try {
+        const acc = accounts[activeIdx];
+        const res = await fetch(`${acc.host}/player_api.php?username=${acc.user}&password=${acc.pass}&action=get_series_info&series_id=${id}`).then(r => r.json());
+        let html = `<select onchange="playSeriesEp(this)" style="margin:0"><option value="">Select Episode</option>`;
+        for(let s in res.episodes) {
+            html += `<optgroup label="Season ${s}">`;
+            res.episodes[s].forEach(ep => {
+                const val = JSON.stringify({id: ep.id, ext: ep.container_extension || 'mp4', title: ep.title});
+                html += `<option value='${val}'>E${ep.episode_num}: ${ep.title}</option>`;
+            });
+            html += `</optgroup>`;
+        }
+        epBox.innerHTML = html + `</select>`;
+    } catch(e) { epBox.innerHTML = "Error loading content."; }
+}
+
+function playSeriesEp(sel) {
+    if(!sel.value) return;
+    const d = JSON.parse(sel.value);
+    playStream(d.id, d.title, 'series', d.ext);
+}
+
+function playStream(id, name, typeOverride = null, extOverride = null) {
+    const acc = accounts[activeIdx];
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    
+    document.getElementById('playingTitle').innerText = name;
+
+    const type = typeOverride || (currentMode === 'live' ? 'live' : 'movie');
+    const ext = extOverride || (currentMode === 'live' ? 'm3u8' : 'mp4');
+    const url = `${acc.host}/${type}/${acc.user}/${acc.pass}/${id}.${ext}`;
+
+    // Force internal player if NOT on Android or if explicitly selected
+    if (!isAndroid || playerPref === 'internal') {
+        document.getElementById('playerOverlay').style.display = 'flex';
+        player.src({ 
+            src: url, 
+            type: (url.includes('m3u8') || type === 'live') ? 'application/x-mpegURL' : 'video/mp4' 
+        });
+        player.play();
+    } else {
+        // Launch external players only on Android
+        closePlayer();
+        if (playerPref === 'vlc') window.location.href = 'vlc://' + url;
+        else if (playerPref === 'mx') window.location.href = `intent:${url}#Intent;package=com.mxtech.videoplayer.ad;end`;
+        else if (playerPref === 'mpv') window.location.href = `intent:${url}#Intent;package=is.xyz.mpv;end`;
+    }
+}
+
+function switchMode(m) {
+    currentMode = m;
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`nav-${m}`).classList.add('active');
+    renderCategories();
+    renderGrid();
+}
+
+function filterByCat(id, name) {
+    // 1. Update the button text to show the currently selected category
+    const display = document.getElementById('activeCatDisplay');
+    if (display) {
+        display.querySelector('span').innerText = name;
+    }
+    
+    // 2. Hide the dropdown menu after selection
+    const catList = document.getElementById("catList");
+    if (catList) {
+        catList.classList.remove("show");
+    }
+    
+    // 3. Filter and redraw the grid with the selected category
+    renderGrid(id);
+}
+function runSearch(q) {
+    if(!q) return renderGrid();
+    const filtered = db[currentMode].s.filter(i => (i.name||i.title||"").toLowerCase().includes(q.toLowerCase()));
+    const grid = document.getElementById('contentGrid');
+    grid.innerHTML = filtered.slice(0, 100).map(i => `
+        <div class="card" onclick="playStream('${i.stream_id || i.series_id}', '${(i.name||i.title)}')">
+            <div class="card-title">${i.name||i.title}</div>
+        </div>
+    `).join('');
+}
+
+function toggleSettings() {
+    const m = document.getElementById('settingsMenu');
+    m.style.display = m.style.display === 'block' ? 'none' : 'block';
+    if(m.style.display === 'block') renderProfiles();
+}
+
+function saveNewAccount() {
+    const acc = { name: document.getElementById('accName').value, host: document.getElementById('hostInp').value, user: document.getElementById('userInp').value, pass: document.getElementById('passInp').value };
+    if(!acc.name || !acc.host) return alert("All fields required");
+    saved.push(acc);
+    localStorage.setItem('xt_accounts', JSON.stringify(saved));
+    location.reload();
+}
+
+function renderProfiles() {
+    const box = document.getElementById('profileBox');
+    box.innerHTML = accounts.map((a, i) => `
+        <div class="profile-item ${i==activeIdx?'active':''}" onclick="setActiveProfile(${i})">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <b>${a.name}</b>
+                ${!a.isHardcoded ? `<i class="fas fa-trash" style="color:#ff4444" onclick="delAccount(${i}); event.stopPropagation();"></i>` : ''}
+            </div>
+            <div id="stat-${i}" class="stat-badge">Checking Subscription...</div>
+        </div>
+    `).join('');
+
+    accounts.forEach(async (a, i) => {
+        try {
+            const r = await fetch(`${a.host}/player_api.php?username=${a.user}&password=${a.pass}`).then(res => res.json());
+            const exp = r.user_info.exp_date ? new Date(r.user_info.exp_date * 1000).toLocaleDateString() : 'Lifetime';
+            document.getElementById(`stat-${i}`).innerText = `EXPIRY: ${exp} | CONNECTIONS: ${r.user_info.active_cons}/${r.user_info.max_connections}`;
+        } catch(e) { document.getElementById(`stat-${i}`).innerText = "Offline/Invalid"; }
+    });
+}
+
+function setActiveProfile(i) { localStorage.setItem('xt_active_idx', i); location.reload(); }
+function delAccount(i) { saved.splice(i-hardcoded.length, 1); localStorage.setItem('xt_accounts', JSON.stringify(saved)); location.reload(); }
+function closePlayer() { player.pause(); document.getElementById('playerOverlay').style.display = 'none'; document.getElementById('epList').style.display = 'none'; }
+</script>
+</body>
+</html>
